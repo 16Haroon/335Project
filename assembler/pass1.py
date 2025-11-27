@@ -1,4 +1,3 @@
-# assembler/pass1.py
 from assembler.tables import SymbolTable, LiteralTable, BlockTable
 
 class Pass1:
@@ -9,24 +8,31 @@ class Pass1:
         self.locctr = 0
         self.start_addr = 0
         self.program_name = ""
-        self.intermediate = []  # (LOCCTR, LABEL, OPCODE, OPERAND)
+        self.intermediate = []   # (LOCCTR, LABEL, OPCODE, OPERAND)
 
     def assemble(self, lines):
         """Perform Pass 1 of SIC/XE assembler."""
-        first_line = lines[0].split()
-        if first_line[1].upper() == "START":
-            self.program_name = first_line[0]
-            self.start_addr = int(first_line[2], 16)
+        # --- Handle START ---
+        first = lines[0].split()
+        if len(first) >= 3 and first[1].upper() == "START":
+            label, opcode, operand = first[0], first[1], first[2]
+            self.program_name = label
+            self.start_addr = int(operand, 16)
             self.locctr = self.start_addr
-            self.intermediate.append((self.locctr, *first_line))
-            lines = lines[1:]  # skip the START line
 
-        # Main Pass 1 loop
+            self.intermediate.append(
+                (self.locctr, label, opcode, operand)
+            )
+
+            lines = lines[1:]  # Skip START line
+
+        # --- Main Loop ---
         for line in lines:
-            if line.strip() == "" or line.startswith('.'):
-                continue  # skip comments or blank lines
+            line = line.strip()
+            if line == "" or line.startswith("."):
+                continue
 
-            parts = line.strip().split()
+            parts = line.split()
             label, opcode, operand = "", "", ""
 
             if len(parts) == 3:
@@ -42,25 +48,35 @@ class Pass1:
                     raise ValueError(f"Duplicate symbol: {label}")
                 self.symtab.add(label, self.locctr)
 
-            # Update LOCCTR based on instruction type
+            # Append BEFORE updating LOCCTR (important!)
+            self.intermediate.append(
+                (self.locctr, label, opcode, operand)
+            )
+
+            # --- LOCCTR Calculation ---
             if opcode == "WORD":
                 self.locctr += 3
+
             elif opcode == "RESW":
                 self.locctr += 3 * int(operand)
+
             elif opcode == "RESB":
                 self.locctr += int(operand)
+
             elif opcode == "BYTE":
-                if operand.startswith("C'"):
-                    self.locctr += len(operand) - 3
-                elif operand.startswith("X'"):
-                    self.locctr += (len(operand) - 3) // 2
+                if operand.upper().startswith("C'"):
+                    # C'EOF' → length = # chars
+                    self.locctr += len(operand.split("'")[1])
+                elif operand.upper().startswith("X'"):
+                    # X'F1' → 2 hex digits = 1 byte
+                    self.locctr += len(operand.split("'")[1]) // 2
+
             elif opcode == "END":
                 break
-            else:
-                # Assume 3-byte instruction for simplicity
-                self.locctr += 3
 
-            self.intermediate.append((self.locctr, label, opcode, operand))
+            else:
+                # Default format 3 instruction
+                self.locctr += 3
 
         program_length = self.locctr - self.start_addr
         return self.intermediate, self.symtab, program_length
