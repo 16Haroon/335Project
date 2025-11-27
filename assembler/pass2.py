@@ -1,36 +1,31 @@
 # assembler/pass2.py 
-from assembler.tables import SymbolTable, OPTAB, LiteralTable
 from assembler.objectwriter import ObjectWriter
 from assembler.listing import ListingWriter
 
 class Pass2:
-    def __init__(self, symtab: SymbolTable, littab: LiteralTable = None):
-        self.symtab = symtab
-        self.littab = littab if littab else LiteralTable()
+    def __init__(self, symtab, optab, littab=None, regtab=None):
+        self.symtab = symtab  
+        self.optab = optab    
+        self.littab = littab  
+        self.regtab = regtab 
         self.obj_writer = ObjectWriter()
         self.base_value = None
         self.location_counter = 0
         self.program_start = 0
-        
-        # Register mapping for format 2 instructions
-        self.REGISTERS = {
-            'A': 0, 'X': 1, 'L': 2, 'B': 3, 
-            'S': 4, 'T': 5, 'F': 6, 'PC': 8, 'SW': 9
-        }
 
     def parse_operand(self, operand):
         """Parse operand to extract addressing mode information"""
         if not operand:
-            return None, None, None, None, None
+            return None, None, None, None, None, None
             
         # Handle format 2 instructions (register-register)
         if ',' in operand:
             parts = operand.split(',')
             if len(parts) == 2:
-                return parts[0], parts[1], None, None, None
+                return parts[0], parts[1], None, None, None, None
         
         # Handle addressing modes
-        addressing_mode = 'simple'  # default
+        addressing_mode = 'simple'
         is_indirect = False
         is_immediate = False
         is_indexed = False
@@ -58,7 +53,7 @@ class Pass2:
     def calculate_displacement(self, target_address, pc_value, base_value, is_format4=False):
         """Calculate displacement for format 3/4 instructions"""
         if is_format4:
-            return target_address  # Format 4 uses direct addressing
+            return target_address, 'direct'
             
         # Format 3 - try PC-relative first
         disp = target_address - pc_value
@@ -84,10 +79,11 @@ class Pass2:
         
         if ',' in operand:
             reg1, reg2 = operand.split(',')
-            r1 = self.REGISTERS.get(reg1.strip(), 0)
-            r2 = self.REGISTERS.get(reg2.strip(), 0)
+            # RegisterTable
+            r1 = self.regtab.get(reg1.strip()) if self.regtab else 0
+            r2 = self.regtab.get(reg2.strip()) if self.regtab else 0
         else:
-            r1 = self.REGISTERS.get(operand.strip(), 0)
+            r1 = self.regtab.get(operand.strip()) if self.regtab else 0
             r2 = 0
             
         return f"{opcode:02X}{r1:01X}{r2:01X}"
@@ -113,22 +109,24 @@ class Pass2:
         # Set e bit for format 4
         e = 1 if is_format4 else 0
         
-        # Calculate target address
-        if clean_operand and clean_operand in self.symtab.symbols:
-            target_addr = self.symtab.get(clean_operand)
-        elif clean_operand and self.littab.get(clean_operand):
-            target_addr = self.littab.get(clean_operand)
-        else:
-            # Try to parse as numeric value
-            try:
-                if clean_operand.startswith('X'):  # Hexadecimal
-                    target_addr = int(clean_operand[2:-1], 16)
-                elif clean_operand.startswith('C'):  # Character
-                    target_addr = ord(clean_operand[2:-1])
-                else:
-                    target_addr = int(clean_operand)
-            except:
-                target_addr = 0  # Default if cannot resolve
+        # Calculate target address using Abdullah's SymbolTable
+        target_addr = 0
+        if clean_operand:
+            # Try symbol table first
+            sym_addr = self.symtab.lookup(clean_operand)
+            if sym_addr is not None:
+                target_addr = sym_addr
+            else:
+                # Try to parse as numeric value
+                try:
+                    if clean_operand.startswith('X'):  # Hexadecimal literal
+                        target_addr = int(clean_operand[2:-1], 16)
+                    elif clean_operand.startswith('C'):  # Character literal  
+                        target_addr = ord(clean_operand[2:-1])
+                    else:
+                        target_addr = int(clean_operand)
+                except:
+                    target_addr = 0  # Default if cannot resolve
                 
         # Calculate displacement and set b,p bits
         if is_format4:
@@ -139,8 +137,10 @@ class Pass2:
             disp, addr_mode = self.calculate_displacement(target_addr, pc_value, self.base_value)
             if addr_mode == 'p':
                 b, p = 0, 1
-            else:  # base-relative
+            elif addr_mode == 'b':
                 b, p = 1, 0
+            else:  # direct
+                b, p = 0, 0
                 
         # Combine everything into object code
         first_byte = (opcode_val << 2) | (n << 1) | i
@@ -148,11 +148,10 @@ class Pass2:
         
         if is_format4:
             # Format 4: 20-bit address
-            obj_code = f"{first_byte:02X}{second_byte:01X}{disp:05X}"
+            obj_code = f"{first_byte:02X}{second_byte:01X}{target_addr:05X}"
         else:
             # Format 3: 12-bit displacement
-            # Ensure displacement is within 12 bits
-            disp_12bit = disp & 0xFFF
+            disp_12bit = disp & 0xFFF  # Ensure 12 bits
             obj_code = f"{first_byte:02X}{second_byte:01X}{disp_12bit:03X}"
             
         return obj_code
@@ -160,19 +159,22 @@ class Pass2:
     def generate_object_code(self, operation, operand, locctr):
         """Main method to generate object code for any instruction"""
         
-        # Handle assembler directives
-        if operation == 'BASE':
-            if operand in self.symtab.symbols:
-                self.base_value = self.symtab.get(operand)
-            return None
-        elif operation in ['RESW', 'RESB', 'WORD', 'BYTE', 'START', 'END']:
-            return None
-            
-        # Check if it's an instruction
-        opcode_hex, format_type = OPTAB.get_opcode(operation)
-        if not opcode_hex:
+        # Handle assembler directives (no object code)
+        if operation in ['BASE', 'RESW', 'RESB', 'WORD', 'BYTE', 'START', 'END', 'LTORG', 'USE']:
+            if operation == 'BASE' and operand:
+                # Set base register value
+                base_addr = self.symtab.lookup(operand)
+                if base_addr is not None:
+                    self.base_value = base_addr
             return None
             
+        # Check if it's an instruction using OpcodeTable
+        opcode_info = self.optab.get(operation)
+        if not opcode_info:
+            return None  # Not an instruction
+            
+        opcode_hex, format_type = opcode_info
+        
         # Generate based on format
         if format_type == 1:
             return self.generate_format1(opcode_hex)
@@ -186,9 +188,8 @@ class Pass2:
         return None
 
     def assemble(self, intermediate_data, program_name="PROG", start_addr=0):
-        """Main assembly method"""
+        """Main assembly method - works with Pass 1 intermediate format"""
         listing = ListingWriter("output_listing.txt")
-        obj_codes = []
         current_address = start_addr
         self.program_start = start_addr
         
@@ -196,14 +197,15 @@ class Pass2:
         text_record_data = []
         
         for line in intermediate_data:
-            if len(line) >= 4:
+            # Handle both tuple and list formats from Pass 1
+            if isinstance(line, (tuple, list)) and len(line) >= 4:
                 locctr, label, operation, operand = line[:4]
                 current_address = locctr
                 
                 # Generate object code
                 obj_code = self.generate_object_code(operation, operand, locctr)
                 
-                # Add to listing
+                # Add to listing using teammate's ListingWriter format
                 listing.add_line(locctr, label or "", operation or "", operand or "", obj_code or "")
                 
                 # Handle text records
