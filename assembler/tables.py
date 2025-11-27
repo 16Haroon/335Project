@@ -44,12 +44,18 @@ class SymbolTable:
     def get(self, label):
         return self.symbols.get(label, None)
     
-    def lookup(self, label):  
-        return self.symbols.get(label, None) 
+    def lookup(self, label):
+        return self.symbols.get(label, None)
+
+    def display(self):  
+        print("\nSYMBOL TABLE")
+        print("============")
+        for sym, addr in self.symbols.items():
+            print(f"{sym:<10} {addr:04X}")
 
     def __repr__(self):
-        return str(self.symbols)
-
+        return str(self.symbols) 
+    
 class LiteralTable:
     def __init__(self):
         self.literals = {}
