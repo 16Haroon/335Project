@@ -43,6 +43,9 @@ class SymbolTable:
 
     def get(self, label):
         return self.symbols.get(label, None)
+    
+    def lookup(self, label):  
+        return self.symbols.get(label, None) 
 
     def __repr__(self):
         return str(self.symbols)
@@ -81,3 +84,49 @@ class BlockTable:
 
     def get(self, name):
         return self.blocks.get(name, 0)
+    
+
+class OpcodeTable:
+    """Compatibility class for tests that expect OpcodeTable instead of OPTAB"""
+    def __init__(self):
+        # Use the same data as OPTAB but in the expected format
+        self.table = {
+            "LDA": ("00", 3), "LDX": ("04", 3), "LDL": ("08", 3),
+            "STA": ("0C", 3), "STX": ("10", 3), "STL": ("14", 3),
+            "LDCH": ("50", 3), "STCH": ("54", 3), "ADD": ("18", 3),
+            "SUB": ("1C", 3), "MUL": ("20", 3), "DIV": ("24", 3),
+            "COMP": ("28", 3), "J": ("3C", 3), "JLT": ("38", 3),
+            "JEQ": ("30", 3), "JGT": ("34", 3), "JSUB": ("48", 3),
+            "RSUB": ("4C", 3), "TIX": ("2C", 3), "TIXR": ("B8", 2),
+            "CLEAR": ("B4", 2), "COMPR": ("A0", 2), "ADDR": ("90", 2),
+            "SUBR": ("94", 2), "MULR": ("98", 2), "DIVR": ("9C", 2),
+            "LDB": ("68", 3), "LDS": ("6C", 3), "LDT": ("74", 3),
+            "STB": ("78", 3), "STS": ("7C", 3), "STT": ("84", 3),
+            "TD": ("E0", 3), "RD": ("D8", 3), "WD": ("DC", 3),
+        }
+
+    def get(self, mnemonic):
+        return self.table.get(mnemonic)
+
+    def display(self):
+        print("\nOPCODE TABLE")
+        print("============")
+        for mnem, (op, fmt) in self.table.items():
+            print(f"{mnem:<8} Opcode: {op:<3} Format: {fmt}")
+
+
+class RegisterTable:
+    def __init__(self):
+        self.registers = {
+            "A": 0, "X": 1, "L": 2, "B": 3,
+            "S": 4, "T": 5, "F": 6, "PC": 8, "SW": 9
+        }
+
+    def get(self, reg):
+        return self.registers.get(reg)
+
+    def display(self):
+        print("\nREGISTER TABLE")
+        print("==============")
+        for reg, code in self.registers.items():
+            print(f"{reg:<3} = {code}")
