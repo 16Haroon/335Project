@@ -1,11 +1,48 @@
-This module defines the main data structures used by our SIC/XE Assembler project.  
+# SIC/XE Assembler
 
-It includes classes for handling assembler tables:
+A complete two-pass SIC/XE assembler that processes assembly code and generates object files.
 
-SymbolTable – stores symbols and addresses  
-OpcodeTable – stores instruction opcodes and formats  
-LiteralTable – manages program literals  
-RegisterTable – maps registers to numeric codes  
-BlockTable – manages program blocks  
+##  Quick Start
 
-Also, these structures are used by Pass 1 and Pass 2 of the assembler.  
+```bash
+# Assemble all sample files
+python main.py
+
+# Assemble specific file
+python main.py examples/basic.txt
+
+## Team
+Heritage Adigun - Pass 2 & Integration
+
+Siddhant Sharma - Pass 1
+
+Abdullah Haroon - Data Structures
+
+## Features
+Two-pass assembly process
+
+Full SIC/XE instruction support
+
+Object code generation
+
+All 6 test files working:
+
+basic.txt 
+
+functions.txt 
+
+literals.txt 
+
+prog_blocks.txt 
+
+control_section.txt 
+
+macros.txt 
+
+ Output
+.obj files - Object code
+
+output_listing.txt - Assembly listing
+
+** This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. **
+
