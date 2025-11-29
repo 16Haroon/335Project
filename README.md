@@ -48,5 +48,5 @@ macros.txt
 output_listing.txt - Assembly listing
 
 
-# This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. 
+## This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. 
 
