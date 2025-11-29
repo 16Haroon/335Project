@@ -59,6 +59,13 @@ class SymbolTable:
     def __repr__(self):
         return str(self.symbols)
     
+    def add(self, label, address):
+        if not label or not label.strip():  # Skip empty labels
+            return
+        if label in self.symbols:
+            raise ValueError(f"Duplicate symbol: {label}")
+        self.symbols[label] = address
+    
 class LiteralTable:
     def __init__(self):
         self.literals = {}
