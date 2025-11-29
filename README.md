@@ -43,10 +43,12 @@ control_section.txt
 macros.txt 
 
 ## Output
- 
+
 .obj files - Object code
 
 output_listing.txt - Assembly listing
 
-## This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. 
+## License
+
+This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements.
 
