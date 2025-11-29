@@ -4,18 +4,18 @@ A complete two-pass SIC/XE assembler that processes assembly code and generates 
 
 ##  Quick Start
 
-```bash
+```bash 
 # Assemble all sample files
 python main.py
 
 # Assemble specific file
 python main.py examples/basic.txt
+```
+
 
 ## Team
-Heritage Adigun - Pass 2 & Integration
-
 Siddhant Sharma - Pass 1
-
+Heritage Adigun - Pass 2 & Integration
 Abdullah Haroon - Data Structures
 
 ## Features
