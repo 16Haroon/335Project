@@ -15,7 +15,9 @@ python main.py examples/basic.txt
 
 ## Team
 Siddhant Sharma - Pass 1
+
 Heritage Adigun - Pass 2 & Integration
+
 Abdullah Haroon - Data Structures
 
 ## Features
@@ -40,9 +42,10 @@ control_section.txt
 macros.txt 
 
  Output
+ 
 .obj files - Object code
 
 output_listing.txt - Assembly listing
 
-** This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. **
+# This project was developed for educational purposes as part of CSCI C-335 Computer Structure course requirements. 
 
