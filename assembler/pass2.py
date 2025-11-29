@@ -4,10 +4,10 @@ from assembler.listing import ListingWriter
 
 class Pass2:
     def __init__(self, symtab, optab, littab=None, regtab=None):
-        self.symtab = symtab  
-        self.optab = optab    
-        self.littab = littab  
-        self.regtab = regtab 
+        self.symtab = symtab
+        self.optab = optab
+        self.littab = littab
+        self.regtab = regtab
         self.obj_writer = ObjectWriter()
         self.base_value = None
         self.location_counter = 0
@@ -79,7 +79,6 @@ class Pass2:
         
         if ',' in operand:
             reg1, reg2 = operand.split(',')
-            # RegisterTable
             r1 = self.regtab.get(reg1.strip()) if self.regtab else 0
             r2 = self.regtab.get(reg2.strip()) if self.regtab else 0
         else:
@@ -109,7 +108,7 @@ class Pass2:
         # Set e bit for format 4
         e = 1 if is_format4 else 0
         
-        # Calculate target address using Abdullah's SymbolTable
+        # Calculate target address using SymbolTable
         target_addr = 0
         if clean_operand:
             # Try symbol table first
@@ -171,19 +170,24 @@ class Pass2:
         # Check if it's an instruction using OpcodeTable
         opcode_info = self.optab.get(operation)
         if not opcode_info:
+            #print(f"DEBUG: No OPTAB entry for '{operation}' at location {locctr:04X}")
             return None  # Not an instruction
             
         opcode_hex, format_type = opcode_info
         
         # Generate based on format
-        if format_type == 1:
-            return self.generate_format1(opcode_hex)
-        elif format_type == 2:
-            return self.generate_format2(opcode_hex, operand)
-        elif format_type == 3:
-            # Check if it's actually format 4 (preceded by '+')
-            is_format4 = operand.startswith('+') if operand else False
-            return self.generate_format3_4(opcode_hex, operand, locctr, is_format4)
+        try:
+            if format_type == 1:
+                return self.generate_format1(opcode_hex)
+            elif format_type == 2:
+                return self.generate_format2(opcode_hex, operand)
+            elif format_type == 3:
+                # Check if it's actually format 4 (preceded by '+')
+                is_format4 = operand.startswith('+') if operand else False
+                return self.generate_format3_4(opcode_hex, operand, locctr, is_format4)
+        except Exception as e:
+            print(f"ERROR generating object code for '{operation} {operand}' at {locctr:04X}: {e}")
+            return None
             
         return None
 

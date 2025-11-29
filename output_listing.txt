@@ -1,13 +1,19 @@
-0000	FIRST     STL       RETADR    532002D
-0003	CLOOP     JSUB      RDREC     1232001A
-0006	          LDA       LENGTH    032002A
+0000	COPY      START     0         
+0000	FIRST     STL       RETADR    5320027
+0003	CLOOP     JSUB      RDREC     12320FFA
+0006	          LDA       LENGTH    0320024
 0009	          COMP      #0        A120FF4
 000C	          JEQ       ENDFIL    C320006
-000F	          JSUB      WRREC     1232001E
+000F	          JSUB      WRREC     12320FEE
 0012	          J         CLOOP     F320FEE
-0015	ENDFIL    LDA       EOF       0320000
-0018	          STA       BUFFER    332001B
+0015	ENDFIL    LDA       EOF       032000F
+0018	          STA       BUFFER    3320015
 001B	          LDA       #3        0120FE5
-001E	          STA       LENGTH    3320012
-0021	          JSUB      WRREC     1232000C
-0024	          J         @RETADR   F220009
+001E	          STA       LENGTH    332000C
+0021	          JSUB      WRREC     12320FDC
+0024	          J         @RETADR   F220003
+0027	EOF       BYTE      C'EOF'    
+002A	RETADR    RESW      1         
+002D	LENGTH    RESW      1         
+0030	BUFFER    RESB      4096      
+1030	          END       FIRST     
