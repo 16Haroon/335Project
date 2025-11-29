@@ -21,13 +21,14 @@ Heritage Adigun - Pass 2 & Integration
 Abdullah Haroon - Data Structures
 
 ## Features
-Two-pass assembly process
 
-Full SIC/XE instruction support
+- Two-pass assembly process
 
-Object code generation
+- Full SIC/XE instruction support
 
-All 6 test files working:
+- Object code generation
+
+- All 6 test files working:
 
 basic.txt 
 
@@ -41,7 +42,7 @@ control_section.txt
 
 macros.txt 
 
- Output
+## Output
  
 .obj files - Object code
 
