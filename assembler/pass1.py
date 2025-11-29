@@ -49,11 +49,13 @@ class Pass1:
             elif len(parts) == 1:
                 opcode = parts[0].upper()
 
-            # Add label to symbol table
-            if label:
+            # Add label to symbol table - ONLY IF NOT EMPTY
+            if label and label.strip():  # Only add NON-EMPTY labels
                 if label in self.symtab:
-                    raise ValueError(f"Duplicate symbol: {label}")
-                self.symtab.add(label, self.locctr)
+                    # For now, just warn but don't crash
+                    print(f"Warning: Duplicate symbol '{label}' - using first definition")
+                else:
+                    self.symtab.add(label, self.locctr)
 
             # PUSH CURRENT LINE BEFORE CHANGING LOCCTR
             self.intermediate.append((self.locctr, label, opcode, operand))

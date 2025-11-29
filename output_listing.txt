@@ -1,0 +1,41 @@
+0000	COPY      START     0         
+0000	RDBUFF    MACRO     &INDEV,&BUFADR,&RECLTH
+0003	                              
+0006	          CLEAR     A         B400
+0009	          CLEAR     S         B400
+000C	                              
+000F	                              
+0012	                              
+0015	                              
+0018	                              
+001B	                              
+001E	                              
+0021	                              
+0024	          JLT       *-19      E320FD9
+0027	                              
+002A	          MEND                
+002D	WRBUFF    MACRO     &OUTDEV,&BUFADR,&RECLTH
+0030	                              
+0033	          LDT       &RECLTH   1D320FCA
+0036	                              
+0039	                              
+003C	                              
+003F	                              
+0042	                              
+0045	          JLT       *-14      E320FB8
+0048	          MEND                
+004B	                              
+004E	                              
+0051	                              
+0054	          COMP      #0        A120FA9
+0057	                              
+005A	                              
+005D	J         CLOOP     .LOOP     
+0060	                              
+0063	          J         @RETADR   F220006
+0066	EOF       BYTE      C'EOF'    
+0069	THREE     WORD      3         
+006C	RETADR    RESW      1         
+006F	                              
+0072	                              
+0075	          END       FIRST     
