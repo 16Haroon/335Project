@@ -119,6 +119,11 @@ class OpcodeTable:
             "LDB": ("68", 3), "LDS": ("6C", 3), "LDT": ("74", 3),
             "STB": ("78", 3), "STS": ("7C", 3), "STT": ("84", 3),
             "TD": ("E0", 3), "RD": ("D8", 3), "WD": ("DC", 3),
+            "START": (None, 0), "END": (None, 0), "RESW": (None, 0), 
+            "RESB": (None, 0), "BYTE": (None, 0), "BASE": (None, 0),
+            "WORD": (None, 0), "LTORG": (None, 0),
+            "+JSUB": ("48", 4), "+LDT": ("74", 4), "+STCH": ("54", 4), 
+            "+LDCH": ("50", 4), "+LDA": ("00", 4), "+STA": ("0C", 4)
         }
 
     def get(self, mnemonic):

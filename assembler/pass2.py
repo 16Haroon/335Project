@@ -157,37 +157,35 @@ class Pass2:
 
     def generate_object_code(self, operation, operand, locctr):
         """Main method to generate object code for any instruction"""
-        
-        # Handle assembler directives (no object code)
+    
+    # Handle assembler directives (no object code)
         if operation in ['BASE', 'RESW', 'RESB', 'WORD', 'BYTE', 'START', 'END', 'LTORG', 'USE']:
-            if operation == 'BASE' and operand:
-                # Set base register value
-                base_addr = self.symtab.lookup(operand)
-                if base_addr is not None:
-                    self.base_value = base_addr
             return None
-            
-        # Check if it's an instruction using OpcodeTable
-        opcode_info = self.optab.get(operation)
+    
+    # Handle format 4 instructions (preceded by '+')
+        is_format4 = operation.startswith('+') if operation else False
+        clean_operation = operation[1:] if is_format4 else operation
+    
+    # Check if it's an instruction using OpcodeTable
+        opcode_info = self.optab.get(clean_operation)
         if not opcode_info:
             return None  # Not an instruction
-            
-        opcode_hex, format_type = opcode_info
         
-        # Generate based on format
+        opcode_hex, format_type = opcode_info
+    
+    # Generate based on format
         try:
             if format_type == 1:
                 return self.generate_format1(opcode_hex)
             elif format_type == 2:
                 return self.generate_format2(opcode_hex, operand)
             elif format_type == 3:
-                # Check if it's actually format 4 (preceded by '+')
-                is_format4 = operand.startswith('+') if operand else False
+            # Use format 4 if instruction has '+' prefix
                 return self.generate_format3_4(opcode_hex, operand, locctr, is_format4)
         except Exception as e:
             print(f"ERROR generating object code for '{operation} {operand}' at {locctr:04X}: {e}")
-            return None
-            
+        return None
+
         return None
 
     def assemble(self, intermediate_data, program_name="PROG", start_addr=0):
@@ -195,55 +193,55 @@ class Pass2:
         listing = ListingWriter("output_listing.txt")
         current_address = start_addr
         self.program_start = start_addr
-        
+    
         text_record_start = start_addr
         text_record_data = []
-        
+    
         for line in intermediate_data:
-            # Handle both tuple and list formats from Pass 1
+        # Handle both tuple and list formats from Pass 1
             if isinstance(line, (tuple, list)) and len(line) >= 4:
                 locctr, label, operation, operand = line[:4]
-                current_address = locctr
+            current_address = locctr
+            
+            # Generate object code with error handling
+            try:
+                obj_code = self.generate_object_code(operation, operand, locctr)
+            except Exception as e:
+                print(f"Warning: Could not generate object code for '{operation} {operand}' at {locctr:04X}: {e}")
+                obj_code = None
+            
+            # Add to listing - handle None obj_code safely
+            obj_code_str = str(obj_code) if obj_code is not None else ""
+            listing.add_line(locctr, label or "", operation or "", operand or "", obj_code_str)
+            
+            # Handle text records - only add non-None obj_code
+            if obj_code:
+                text_record_data.append(obj_code)
                 
-                # Generate object code with error handling
-                try:
-                    obj_code = self.generate_object_code(operation, operand, locctr)
-                except Exception as e:
-                    print(f"Warning: Could not generate object code for '{operation} {operand}' at {locctr:04X}: {e}")
-                    obj_code = None
-                
-                # Add to listing - handle None obj_code
-                obj_code_str = obj_code if obj_code else ""
-                listing.add_line(locctr, label or "", operation or "", operand or "", obj_code_str)
-                
-                # Handle text records
-                if obj_code:
-                    text_record_data.append(obj_code)
-                    
-                    # If text record would exceed 30 bytes, write it and start new one
-                    if len(text_record_data) >= 10:
-                        self.obj_writer.add_text_record(text_record_start, text_record_data)
-                        text_record_start = locctr + len(obj_code) // 2
-                        text_record_data = []
-                else:
-                    # Write current text record if there's data and we hit a non-code line
-                    if text_record_data:
-                        self.obj_writer.add_text_record(text_record_start, text_record_data)
-                        text_record_start = None
-                        text_record_data = []
-        
-        # Write any remaining text record data
+                # If text record would exceed 30 bytes, write it and start new one
+                if len(text_record_data) >= 10:
+                    self.obj_writer.add_text_record(text_record_start, text_record_data)
+                    text_record_start = locctr + len(obj_code) // 2
+                    text_record_data = []
+            else:
+                # Write current text record if there's data and we hit a non-code line
+                if text_record_data:
+                    self.obj_writer.add_text_record(text_record_start, text_record_data)
+                    text_record_start = locctr + 3  # Move to next instruction
+                    text_record_data = []
+    
+    # Write any remaining text record data
         if text_record_data:
             self.obj_writer.add_text_record(text_record_start, text_record_data)
-        
-        # Calculate program length
+    
+    # Calculate program length
         program_length = current_address - start_addr
-        
-        # Write header and end records
+    
+    # Write header and end records
         self.obj_writer.write_header(program_name, start_addr, program_length)
         self.obj_writer.write_end(start_addr)
-        
-        # Write listing file
+    
+    # Write listing file
         listing.write()
-        
+    
         return self.obj_writer.generate()
