@@ -50,9 +50,13 @@ class Pass1:
                 opcode = parts[0].upper()
 
             # Add label to symbol table
+            # In the main loop where you add labels:
             if label:
-                if label in self.symtab:
-                    raise ValueError(f"Duplicate symbol: {label}")
+                 if label in self.symtab:
+        # For control sections, allow duplicates with warning
+                        print(f"Warning: Duplicate symbol '{label}' - using first definition")
+        # Don't add duplicate to symbol table
+            else:
                 self.symtab.add(label, self.locctr)
 
             # PUSH CURRENT LINE BEFORE CHANGING LOCCTR

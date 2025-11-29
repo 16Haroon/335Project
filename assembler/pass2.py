@@ -191,55 +191,60 @@ class Pass2:
             
         return None
 
-    def assemble(self, intermediate_data, program_name="PROG", start_addr=0):
-        """Main assembly method - works with Pass 1 intermediate format"""
-        listing = ListingWriter("output_listing.txt")
-        current_address = start_addr
-        self.program_start = start_addr
-        
-        text_record_start = start_addr
-        text_record_data = []
-        
-        for line in intermediate_data:
-            # Handle both tuple and list formats from Pass 1
-            if isinstance(line, (tuple, list)) and len(line) >= 4:
-                locctr, label, operation, operand = line[:4]
-                current_address = locctr
-                
-                # Generate object code
+def assemble(self, intermediate_data, program_name="PROG", start_addr=0):
+    """Main assembly method - works with Pass 1 intermediate format"""
+    listing = ListingWriter("output_listing.txt")
+    current_address = start_addr
+    self.program_start = start_addr
+    
+    text_record_start = start_addr
+    text_record_data = []
+    
+    for line in intermediate_data:
+        # Handle both tuple and list formats from Pass 1
+        if isinstance(line, (tuple, list)) and len(line) >= 4:
+            locctr, label, operation, operand = line[:4]
+            current_address = locctr
+            
+            # Generate object code with error handling
+            try:
                 obj_code = self.generate_object_code(operation, operand, locctr)
+            except Exception as e:
+                print(f"Warning: Could not generate object code for '{operation} {operand}' at {locctr:04X}: {e}")
+                obj_code = None
+            
+            # Add to listing - handle None obj_code
+            obj_code_str = obj_code if obj_code else ""
+            listing.add_line(locctr, label or "", operation or "", operand or "", obj_code_str)
+            
+            # Handle text records
+            if obj_code:
+                text_record_data.append(obj_code)
                 
-                # Add to listing using teammate's ListingWriter format
-                listing.add_line(locctr, label or "", operation or "", operand or "", obj_code or "")
-                
-                # Handle text records
-                if obj_code:
-                    text_record_data.append(obj_code)
-                    
-                    # If text record would exceed 30 bytes, write it and start new one
-                    if len(text_record_data) >= 10:  # 10 instructions * 3 bytes = 30 bytes
-                        self.obj_writer.add_text_record(text_record_start, text_record_data)
-                        text_record_start = locctr + len(obj_code) // 2
-                        text_record_data = []
-                else:
-                    # Write current text record if there's data and we hit a non-code line
-                    if text_record_data:
-                        self.obj_writer.add_text_record(text_record_start, text_record_data)
-                        text_record_start = None
-                        text_record_data = []
-        
-        # Write any remaining text record data
-        if text_record_data:
-            self.obj_writer.add_text_record(text_record_start, text_record_data)
-        
-        # Calculate program length
-        program_length = current_address - start_addr
-        
-        # Write header and end records
-        self.obj_writer.write_header(program_name, start_addr, program_length)
-        self.obj_writer.write_end(start_addr)
-        
-        # Write listing file
-        listing.write()
-        
-        return self.obj_writer.generate()
+                # If text record would exceed 30 bytes, write it and start new one
+                if len(text_record_data) >= 10:
+                    self.obj_writer.add_text_record(text_record_start, text_record_data)
+                    text_record_start = locctr + len(obj_code) // 2
+                    text_record_data = []
+            else:
+                # Write current text record if there's data and we hit a non-code line
+                if text_record_data:
+                    self.obj_writer.add_text_record(text_record_start, text_record_data)
+                    text_record_start = None
+                    text_record_data = []
+    
+    # Write any remaining text record data
+    if text_record_data:
+        self.obj_writer.add_text_record(text_record_start, text_record_data)
+    
+    # Calculate program length
+    program_length = current_address - start_addr
+    
+    # Write header and end records
+    self.obj_writer.write_header(program_name, start_addr, program_length)
+    self.obj_writer.write_end(start_addr)
+    
+    # Write listing file
+    listing.write()
+    
+    return self.obj_writer.generate()

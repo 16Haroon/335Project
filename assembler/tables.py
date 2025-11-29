@@ -1,4 +1,4 @@
-# assembler/tables.py 
+# assembler/tables.py - CORRECTED INDENTATION
 class OPTAB:
     # SIC/XE Instruction Set - opcode in hex, format
     INSTRUCTIONS = {
@@ -22,8 +22,8 @@ class OPTAB:
         'SUBF': ('5C', 3), 'SUBR': ('94', 2), 'SVC': ('B0', 2),
         'TD': ('E0', 3), 'TIO': ('F8', 1), 'TIX': ('2C', 3),
         'TIXR': ('B8', 2), 'WD': ('DC', 3)
-    }
-    
+    }  # ← MAKE SURE THIS BRACE IS HERE!
+
     @classmethod
     def get_opcode(cls, mnemonic):
         return cls.INSTRUCTIONS.get(mnemonic, (None, None))
