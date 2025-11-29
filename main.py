@@ -8,7 +8,7 @@ from assembler.pass2 import Pass2
 def assemble_file(filename):
     """Assemble a single SIC/XE file"""
     try:
-        print(f"🔧 Assembling {filename}...")
+        print(f" Assembling {filename}...")
         
         # Read input file
         with open(filename, 'r') as f:
@@ -78,7 +78,7 @@ def main():
             else:
                 print(f"File not found: {file}")
         
-        print(f"📊 Results: {success_count}/{len(files)} files assembled successfully!")
+        print(f" Results: {success_count}/{len(files)} files assembled successfully!")
 
 if __name__ == "__main__":
     main()
