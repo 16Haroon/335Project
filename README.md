@@ -1,6 +1,7 @@
 # SIC/XE Assembler
 
 A complete two-pass SIC/XE assembler that processes assembly code and generates object files.
+Written in Python. 
 
 ##  Quick Start
 
